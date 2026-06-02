@@ -6,6 +6,14 @@
 
 ![Project breakdown table](screenshot-2.jpg)
 
+## Quick Start (No Install)
+
+```bash
+npx @notenkidev/claude-token-dashboard
+```
+
+Open http://localhost:3000
+
 ## What it shows
 
 | Section | Details |
