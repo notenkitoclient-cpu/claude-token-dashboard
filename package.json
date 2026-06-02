@@ -1,7 +1,25 @@
 {
   "name": "claude-token-dashboard",
   "version": "0.1.0",
-  "private": true,
+  "description": "Visualize your Claude Code token usage by project and date",
+  "bin": {
+    "claude-token-dashboard": "./bin/cli.js"
+  },
+  "files": [
+    "app",
+    "components",
+    "lib",
+    "public",
+    "bin",
+    "next.config.ts",
+    "postcss.config.mjs",
+    "tsconfig.json",
+    "components.json",
+    "eslint.config.mjs",
+    "next-env.d.ts",
+    "screenshot-1.jpg",
+    "screenshot-2.jpg"
+  ],
   "scripts": {
     "dev": "next dev",
     "build": "next build",
