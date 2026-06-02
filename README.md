@@ -19,7 +19,7 @@ Cache read tokens from prompt caching are tracked separately — you can see at 
 ## Quick start
 
 ```bash
-npx claude-token-dashboard
+npx @notenkidev/claude-token-dashboard
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
@@ -29,7 +29,7 @@ On first run, dependencies are installed automatically (~30s). After that it sta
 **Custom port:**
 
 ```bash
-npx claude-token-dashboard -p 4000
+npx @notenkidev/claude-token-dashboard -p 4000
 ```
 
 Reads `~/.claude/projects/**/*.jsonl` directly — no config, no API key needed.

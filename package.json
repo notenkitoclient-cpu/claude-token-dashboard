@@ -1,5 +1,5 @@
 {
-  "name": "claude-token-dashboard",
+  "name": "@notenkidev/claude-token-dashboard",
   "version": "0.1.2",
   "description": "Visualize your Claude Code token usage by project and date",
   "bin": {
