@@ -1,6 +1,6 @@
 {
   "name": "claude-token-dashboard",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Visualize your Claude Code token usage by project and date",
   "bin": {
     "claude-token-dashboard": "./bin/cli.js"
