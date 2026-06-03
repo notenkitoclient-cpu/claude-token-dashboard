@@ -1,5 +1,6 @@
 import { collect } from "@/lib/collect"
 import SummaryCards from "@/components/SummaryCards"
+import InsightPanel from "@/components/InsightPanel"
 import ProjectTable from "@/components/ProjectTable"
 import DailyChart from "@/components/DailyChart"
 import RefreshButton from "@/components/RefreshButton"
@@ -45,6 +46,9 @@ export default function Page() {
         totalEntries={totalEntries}
         skippedDup={skippedDup}
       />
+
+      {/* Insights */}
+      <InsightPanel byProject={byProject} byProjectClaudeMd={byProjectClaudeMd} />
 
       {/* Daily chart */}
       <Card>
