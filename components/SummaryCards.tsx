@@ -1,5 +1,6 @@
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import type { TokenStats } from "@/lib/collect"
+import { calcCost, fmtCost } from "@/lib/pricing"
 
 interface Props {
   byProject: Record<string, TokenStats>
@@ -25,24 +26,33 @@ export default function SummaryCards({ byProject, totalFiles, totalEntries, skip
   const effectiveInput = totalInput + totalCacheRead + totalCacheCreate
   const cacheRatio = effectiveInput > 0 ? (totalCacheRead / effectiveInput) * 100 : 0
 
+  const totalCost = allStats.reduce((s, v) => s + calcCost(v), 0)
+
   const cards = [
+    {
+      title: "Estimated Cost",
+      value: fmtCost(totalCost),
+      sub: "claude-sonnet-4-6",
+      highlight: true,
+    },
     { title: "Output Tokens", value: fmtBig(totalOutput), sub: "generated" },
     { title: "Input Tokens", value: fmtBig(totalInput), sub: "sent" },
     { title: "Effective Input", value: fmtBig(effectiveInput), sub: "input + cache" },
     { title: "Cache Read Ratio", value: `${cacheRatio.toFixed(1)}%`, sub: "of effective input" },
-    { title: "Projects", value: String(Object.keys(byProject).length), sub: "unique" },
     { title: "Sessions", value: fmtBig(totalFiles), sub: `${fmtBig(totalEntries)} entries · ${fmtBig(skippedDup)} deduped` },
   ]
 
   return (
     <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
       {cards.map((c) => (
-        <Card key={c.title}>
+        <Card key={c.title} className={c.highlight ? "border-emerald-500/40 bg-emerald-950/20" : ""}>
           <CardHeader className="pb-2">
             <CardTitle>{c.title}</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold font-mono tracking-tight">{c.value}</p>
+            <p className={`text-2xl font-bold font-mono tracking-tight ${c.highlight ? "text-emerald-400" : ""}`}>
+              {c.value}
+            </p>
             <p className="mt-1 text-xs text-muted-foreground">{c.sub}</p>
           </CardContent>
         </Card>
