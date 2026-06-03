@@ -2,14 +2,15 @@
 
 > Visualize your [Claude Code](https://claude.ai/code) token usage by project and date — built with Next.js + Tailwind.
 
-![Summary cards and daily chart](screenshot-1.jpg)
+![Summary cards and daily chart](screenshot.v2-1.png)
 
-![Project breakdown table](screenshot-2.jpg)
+![Project breakdown table](screenshot.v2-2.png)
 
 ## Quick Start (No Install)
 
 ```bash
-npx @notenkidev/claude-token-dashboard
+npm install -g @notenkidev/claude-token-dashboard
+claude-token-dashboard
 ```
 
 Open http://localhost:3000
@@ -18,26 +19,34 @@ Open http://localhost:3000
 
 | Section | Details |
 |---|---|
-| **Summary cards** | Output tokens · Input tokens · Effective input · Cache read ratio · Project count · Session count |
+| **Summary cards** | Estimated total cost · Output tokens · Input tokens · Effective input · Cache read ratio · Session count |
 | **Daily chart** | Input / output tokens per day (bar chart) |
-| **Project table** | Per-project breakdown sorted by total usage, with inline bar |
+| **Project table** | Per-project breakdown sorted by cost, with inline bar |
 
 Cache read tokens from prompt caching are tracked separately — you can see at a glance how much of your effective input Claude is serving from cache (typically 90%+).
+
+## Features
+
+- Token usage per project (output / input / cache read / cache create)
+- Daily usage chart
+- Cache read ratio
+- Estimated cost in USD per project (claude-sonnet-4-6 pricing)
+- Cost share % with warning for projects over 20% of total spend
+- Total estimated cost since first session
 
 ## Quick start
 
 ```bash
-npx @notenkidev/claude-token-dashboard
+npm install -g @notenkidev/claude-token-dashboard
+claude-token-dashboard
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
 
-On first run, dependencies are installed automatically (~30s). After that it starts instantly.
-
 **Custom port:**
 
 ```bash
-npx @notenkidev/claude-token-dashboard -p 4000
+claude-token-dashboard -p 4000
 ```
 
 Reads `~/.claude/projects/**/*.jsonl` directly — no config, no API key needed.
