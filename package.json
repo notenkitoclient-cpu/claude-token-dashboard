@@ -17,8 +17,8 @@
     "components.json",
     "eslint.config.mjs",
     "next-env.d.ts",
-    "screenshot-1.jpg",
-    "screenshot-2.jpg"
+    "screenshot.v2-1.png",
+    "screenshot.v2-2.png"
   ],
   "scripts": {
     "dev": "next dev",
