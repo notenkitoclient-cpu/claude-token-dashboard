@@ -1,8 +1,11 @@
 import type { TokenStats } from "@/lib/collect"
 import { calcCost, fmtCost } from "@/lib/pricing"
 
+const CLAUDE_MD_WARN_BYTES = 5 * 1024 // 5 KB
+
 interface Props {
   byProject: Record<string, TokenStats>
+  byProjectClaudeMd: Record<string, number | null>
 }
 
 function fmt(n: number): string {
@@ -11,13 +14,14 @@ function fmt(n: number): string {
   return n.toLocaleString()
 }
 
-export default function ProjectTable({ byProject }: Props) {
+export default function ProjectTable({ byProject, byProjectClaudeMd }: Props) {
   const rows = Object.entries(byProject)
     .map(([project, stats]) => ({
       project,
       ...stats,
       total: stats.input + stats.output,
       cost: calcCost(stats),
+      claudeMdBytes: byProjectClaudeMd[project] ?? null,
     }))
     .sort((a, b) => b.cost - a.cost)
 
@@ -36,6 +40,7 @@ export default function ProjectTable({ byProject }: Props) {
             <th className="px-4 py-3 text-right font-medium text-muted-foreground">Input</th>
             <th className="px-4 py-3 text-right font-medium text-muted-foreground hidden md:table-cell">Cache Read</th>
             <th className="px-4 py-3 text-right font-medium text-muted-foreground hidden lg:table-cell">Cache Create</th>
+            <th className="px-4 py-3 text-right font-medium text-muted-foreground hidden xl:table-cell">CLAUDE.md</th>
             <th className="px-4 py-3 text-right font-medium text-muted-foreground">Tokens</th>
             <th className="px-4 py-3 w-28 hidden sm:table-cell"></th>
           </tr>
@@ -45,6 +50,11 @@ export default function ProjectTable({ byProject }: Props) {
             const pct = (row.total / maxTotal) * 100
             const costShare = totalCost > 0 ? row.cost / totalCost : 0
             const isHighCost = costShare >= WARNING_THRESHOLD
+            const isHeavyClaudeMd = row.claudeMdBytes !== null && row.claudeMdBytes >= CLAUDE_MD_WARN_BYTES
+            const claudeMdLabel =
+              row.claudeMdBytes === null
+                ? "-"
+                : `${(row.claudeMdBytes / 1024).toFixed(1)} KB`
 
             return (
               <tr
@@ -80,6 +90,20 @@ export default function ProjectTable({ byProject }: Props) {
                 </td>
                 <td className="px-4 py-3 text-right font-mono text-xs text-muted-foreground hidden lg:table-cell">
                   {fmt(row.cacheCreate)}
+                </td>
+                <td className="px-4 py-3 text-right font-mono text-xs hidden xl:table-cell">
+                  {isHeavyClaudeMd ? (
+                    <span
+                      className="text-orange-400 font-semibold"
+                      title="CLAUDE.mdが重い可能性があります（5KB以上）"
+                    >
+                      ⚠ {claudeMdLabel}
+                    </span>
+                  ) : (
+                    <span className={row.claudeMdBytes !== null ? "text-muted-foreground" : "text-muted-foreground/40"}>
+                      {claudeMdLabel}
+                    </span>
+                  )}
                 </td>
                 <td className="px-4 py-3 text-right font-mono text-xs text-muted-foreground">{fmt(row.total)}</td>
                 <td className="px-4 py-3 hidden sm:table-cell">

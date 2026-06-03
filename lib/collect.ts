@@ -12,6 +12,7 @@ export interface TokenStats {
 export interface DashboardData {
   byProject: Record<string, TokenStats>
   byDay: Record<string, TokenStats>
+  byProjectClaudeMd: Record<string, number | null> // bytes, null = not found
   totalFiles: number
   totalEntries: number
   skippedDup: number
@@ -50,15 +51,34 @@ function addStats(target: TokenStats, input: number, output: number, cacheCreate
   target.cacheRead += cacheRead
 }
 
+function claudeMdBytes(cwd: string): number | null {
+  // Walk up from cwd to find CLAUDE.md, stopping at home directory
+  const home = os.homedir()
+  let dir = cwd
+  while (dir.startsWith(home) && dir !== home) {
+    try {
+      const stat = fs.statSync(path.join(dir, "CLAUDE.md"))
+      if (stat.isFile()) return stat.size
+    } catch { /* not found at this level */ }
+    const parent = path.dirname(dir)
+    if (parent === dir) break
+    dir = parent
+  }
+  return null
+}
+
 export function collect(): DashboardData {
   const byProject: Record<string, TokenStats> = {}
   const byDay: Record<string, TokenStats> = {}
+  const cwdByLabel: Record<string, string> = {}  // label → first seen cwd
   const seenMessageIds = new Set<string>()
   let totalFiles = 0
   let totalEntries = 0
   let skippedDup = 0
 
-  if (!fs.existsSync(BASE)) return { byProject, byDay, totalFiles, totalEntries, skippedDup }
+  if (!fs.existsSync(BASE)) {
+    return { byProject, byDay, byProjectClaudeMd: {}, totalFiles, totalEntries, skippedDup }
+  }
 
   const projectDirs = fs.readdirSync(BASE).sort()
 
@@ -101,6 +121,7 @@ export function collect(): DashboardData {
 
         const cwd = (d.cwd as string) || ""
         const label = cwd ? projectLabelFromCwd(cwd) : fallbackLabel
+        if (cwd && !cwdByLabel[label]) cwdByLabel[label] = cwd
 
         const ts = (d.timestamp as string) || ""
         let date = "unknown"
@@ -121,5 +142,12 @@ export function collect(): DashboardData {
     }
   }
 
-  return { byProject, byDay, totalFiles, totalEntries, skippedDup }
+  // Resolve CLAUDE.md sizes after all entries are processed
+  const byProjectClaudeMd: Record<string, number | null> = {}
+  for (const label of Object.keys(byProject)) {
+    const cwd = cwdByLabel[label]
+    byProjectClaudeMd[label] = cwd ? claudeMdBytes(cwd) : null
+  }
+
+  return { byProject, byDay, byProjectClaudeMd, totalFiles, totalEntries, skippedDup }
 }
