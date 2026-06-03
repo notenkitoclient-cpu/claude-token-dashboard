@@ -1,6 +1,6 @@
 {
   "name": "@notenkidev/claude-token-dashboard",
-  "version": "0.1.11",
+  "version": "0.1.12",
   "description": "Visualize your Claude Code token usage by project and date",
   "bin": {
     "claude-token-dashboard": "bin/cli.js"
