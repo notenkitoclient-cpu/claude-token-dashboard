@@ -9,10 +9,18 @@ export interface TokenStats {
   cacheRead: number
 }
 
+export interface SessionData {
+  sessionId: string
+  startedAt: string   // ISO timestamp of first message in session
+  stats: TokenStats
+  messageCount: number
+}
+
 export interface DashboardData {
   byProject: Record<string, TokenStats>
   byDay: Record<string, TokenStats>
   byProjectClaudeMd: Record<string, number | null> // bytes, null = not found
+  byProjectSessions: Record<string, SessionData[]> // newest-first
   totalFiles: number
   totalEntries: number
   skippedDup: number
@@ -70,14 +78,16 @@ function claudeMdBytes(cwd: string): number | null {
 export function collect(): DashboardData {
   const byProject: Record<string, TokenStats> = {}
   const byDay: Record<string, TokenStats> = {}
-  const cwdByLabel: Record<string, string> = {}  // label → first seen cwd
+  const cwdByLabel: Record<string, string> = {}
+  // label → sessionId → session accumulator
+  const sessionAcc: Record<string, Record<string, { startedAt: string; stats: TokenStats; messageCount: number }>> = {}
   const seenMessageIds = new Set<string>()
   let totalFiles = 0
   let totalEntries = 0
   let skippedDup = 0
 
   if (!fs.existsSync(BASE)) {
-    return { byProject, byDay, byProjectClaudeMd: {}, totalFiles, totalEntries, skippedDup }
+    return { byProject, byDay, byProjectClaudeMd: {}, byProjectSessions: {}, totalFiles, totalEntries, skippedDup }
   }
 
   const projectDirs = fs.readdirSync(BASE).sort()
@@ -138,6 +148,19 @@ export function collect(): DashboardData {
         addStats(byProject[label], input, output, cacheCreate, cacheRead)
         addStats(byDay[date], input, output, cacheCreate, cacheRead)
         totalEntries++
+
+        // Session-level accumulation
+        const sessionId = (d.sessionId as string) || ""
+        if (sessionId) {
+          if (!sessionAcc[label]) sessionAcc[label] = {}
+          if (!sessionAcc[label][sessionId]) {
+            sessionAcc[label][sessionId] = { startedAt: ts, stats: emptyStats(), messageCount: 0 }
+          }
+          const sess = sessionAcc[label][sessionId]
+          if (ts && (!sess.startedAt || ts < sess.startedAt)) sess.startedAt = ts
+          addStats(sess.stats, input, output, cacheCreate, cacheRead)
+          sess.messageCount++
+        }
       }
     }
   }
@@ -149,5 +172,13 @@ export function collect(): DashboardData {
     byProjectClaudeMd[label] = cwd ? claudeMdBytes(cwd) : null
   }
 
-  return { byProject, byDay, byProjectClaudeMd, totalFiles, totalEntries, skippedDup }
+  // Flatten session accumulators → sorted arrays (newest first)
+  const byProjectSessions: Record<string, SessionData[]> = {}
+  for (const [label, sessions] of Object.entries(sessionAcc)) {
+    byProjectSessions[label] = Object.entries(sessions)
+      .map(([sessionId, data]) => ({ sessionId, ...data }))
+      .sort((a, b) => b.startedAt.localeCompare(a.startedAt))
+  }
+
+  return { byProject, byDay, byProjectClaudeMd, byProjectSessions, totalFiles, totalEntries, skippedDup }
 }

@@ -9,7 +9,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 export const dynamic = "force-dynamic"
 
 export default function Page() {
-  const { byProject, byDay, byProjectClaudeMd, totalFiles, totalEntries, skippedDup } = collect()
+  const { byProject, byDay, byProjectClaudeMd, byProjectSessions, totalFiles, totalEntries, skippedDup } = collect()
 
   const dayData = Object.entries(byDay)
     .filter(([date]) => date !== "unknown")
@@ -70,7 +70,11 @@ export default function Page() {
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <ProjectTable byProject={byProject} byProjectClaudeMd={byProjectClaudeMd} />
+          <ProjectTable
+            byProject={byProject}
+            byProjectClaudeMd={byProjectClaudeMd}
+            byProjectSessions={byProjectSessions}
+          />
         </CardContent>
       </Card>
     </main>
