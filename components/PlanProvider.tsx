@@ -12,10 +12,12 @@ interface PlanCtx {
   mounted: boolean
 }
 
-const PlanContext = createContext<PlanCtx>({ plan: "API", setPlan: () => {}, mounted: false })
+const DEFAULT_PLAN: Plan = "Pro"
+
+const PlanContext = createContext<PlanCtx>({ plan: DEFAULT_PLAN, setPlan: () => {}, mounted: false })
 
 export function PlanProvider({ children }: { children: React.ReactNode }) {
-  const [plan, setPlanState] = useState<Plan>("API")
+  const [plan, setPlanState] = useState<Plan>(DEFAULT_PLAN)
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {

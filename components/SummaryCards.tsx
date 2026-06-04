@@ -22,7 +22,7 @@ function fmtBig(n: number): string {
 
 export default function SummaryCards({ byProject, totalFiles, totalEntries, skippedDup }: Props) {
   const { plan, mounted } = usePlan()
-  const isApiPlan = !mounted || plan === "API"   // default to API rendering until hydrated
+  const isApiPlan = mounted && plan === "API"
 
   const allStats = Object.values(byProject)
   const totalInput = allStats.reduce((s, v) => s + v.input, 0)
