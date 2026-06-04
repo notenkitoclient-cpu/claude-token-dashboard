@@ -4,6 +4,7 @@ import InsightPanel from "@/components/InsightPanel"
 import ProjectTable from "@/components/ProjectTable"
 import DailyChart from "@/components/DailyChart"
 import RefreshButton from "@/components/RefreshButton"
+import SettingsModal from "@/components/SettingsModal"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 
 export const dynamic = "force-dynamic"
@@ -35,7 +36,10 @@ export default function Page() {
             ~/.claude/projects/ &nbsp;·&nbsp; {generatedAt} JST
           </p>
         </div>
-        <RefreshButton />
+        <div className="flex items-center gap-2">
+          <SettingsModal />
+          <RefreshButton />
+        </div>
       </div>
 
       {/* Summary cards */}

@@ -1,6 +1,9 @@
+"use client"
+
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import type { TokenStats } from "@/lib/collect"
 import { calcCost, fmtCost } from "@/lib/pricing"
+import { usePlan } from "@/components/PlanProvider"
 
 interface Props {
   byProject: Record<string, TokenStats>
@@ -18,6 +21,9 @@ function fmtBig(n: number): string {
 }
 
 export default function SummaryCards({ byProject, totalFiles, totalEntries, skippedDup }: Props) {
+  const { plan, mounted } = usePlan()
+  const isApiPlan = !mounted || plan === "API"   // default to API rendering until hydrated
+
   const allStats = Object.values(byProject)
   const totalInput = allStats.reduce((s, v) => s + v.input, 0)
   const totalOutput = allStats.reduce((s, v) => s + v.output, 0)
@@ -25,38 +31,61 @@ export default function SummaryCards({ byProject, totalFiles, totalEntries, skip
   const totalCacheCreate = allStats.reduce((s, v) => s + v.cacheCreate, 0)
   const effectiveInput = totalInput + totalCacheRead + totalCacheCreate
   const cacheRatio = effectiveInput > 0 ? (totalCacheRead / effectiveInput) * 100 : 0
-
   const totalCost = allStats.reduce((s, v) => s + calcCost(v), 0)
 
+  // First card differs by plan
+  const firstCard = isApiPlan
+    ? {
+        title: "Estimated Cost",
+        value: fmtCost(totalCost),
+        sub: "claude-sonnet-4-6",
+        highlight: true,
+      }
+    : {
+        title: "Token Usage",
+        value: fmtBig(totalOutput),
+        sub: `${cacheRatio.toFixed(1)}% cache hit · ${fmtBig(totalInput)} input`,
+        highlight: true,
+      }
+
   const cards = [
+    firstCard,
+    { title: "Output Tokens", value: fmtBig(totalOutput), sub: "generated", highlight: false },
+    { title: "Input Tokens", value: fmtBig(totalInput), sub: "sent", highlight: false },
+    { title: "Effective Input", value: fmtBig(effectiveInput), sub: "input + cache", highlight: false },
+    { title: "Cache Read Ratio", value: `${cacheRatio.toFixed(1)}%`, sub: "of effective input", highlight: false },
     {
-      title: "Estimated Cost",
-      value: fmtCost(totalCost),
-      sub: "claude-sonnet-4-6",
-      highlight: true,
+      title: "Sessions",
+      value: fmtBig(totalFiles),
+      sub: `${fmtBig(totalEntries)} entries · ${fmtBig(skippedDup)} deduped`,
+      highlight: false,
     },
-    { title: "Output Tokens", value: fmtBig(totalOutput), sub: "generated" },
-    { title: "Input Tokens", value: fmtBig(totalInput), sub: "sent" },
-    { title: "Effective Input", value: fmtBig(effectiveInput), sub: "input + cache" },
-    { title: "Cache Read Ratio", value: `${cacheRatio.toFixed(1)}%`, sub: "of effective input" },
-    { title: "Sessions", value: fmtBig(totalFiles), sub: `${fmtBig(totalEntries)} entries · ${fmtBig(skippedDup)} deduped` },
   ]
 
   return (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
-      {cards.map((c) => (
-        <Card key={c.title} className={c.highlight ? "border-emerald-500/40 bg-emerald-950/20" : ""}>
-          <CardHeader className="pb-2">
-            <CardTitle>{c.title}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className={`text-2xl font-bold font-mono tracking-tight ${c.highlight ? "text-emerald-400" : ""}`}>
-              {c.value}
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground">{c.sub}</p>
-          </CardContent>
-        </Card>
-      ))}
+    <div className="space-y-2">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+        {cards.map((c) => (
+          <Card key={c.title} className={c.highlight ? "border-emerald-500/40 bg-emerald-950/20" : ""}>
+            <CardHeader className="pb-2">
+              <CardTitle>{c.title}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className={`text-2xl font-bold font-mono tracking-tight ${c.highlight ? "text-emerald-400" : ""}`}>
+                {c.value}
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">{c.sub}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Footnote for Pro/Max */}
+      {mounted && !isApiPlan && (
+        <p className="text-[11px] text-muted-foreground/60 pl-1">
+          * Cost shown is API-price reconstruction, not metered billing
+        </p>
+      )}
     </div>
   )
 }
