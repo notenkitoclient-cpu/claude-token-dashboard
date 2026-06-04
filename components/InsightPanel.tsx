@@ -14,9 +14,9 @@ const LEVEL_STYLES: Record<InsightLevel, { bar: string; icon: string; badge: str
 }
 
 const LEVEL_LABEL: Record<InsightLevel, string> = {
-  alert:   "重要",
-  warning: "注意",
-  tip:     "提案",
+  alert:   "Alert",
+  warning: "Warning",
+  tip:     "Tip",
 }
 
 export default function InsightPanel({ byProject, byProjectClaudeMd }: Props) {
@@ -28,7 +28,7 @@ export default function InsightPanel({ byProject, byProjectClaudeMd }: Props) {
     <Card>
       <CardHeader className="pb-3">
         <CardTitle className="text-base font-semibold text-foreground">
-          削減提案
+          Cost Reduction Insights
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -39,7 +39,7 @@ export default function InsightPanel({ byProject, byProjectClaudeMd }: Props) {
               key={i}
               className="flex gap-3 rounded-lg border border-border bg-muted/20 overflow-hidden"
             >
-              {/* 左カラーバー */}
+              {/* color bar */}
               <div className={`w-1 shrink-0 ${s.bar}`} />
               <div className="flex items-start gap-2 py-3 pr-4">
                 <span className="text-base leading-none mt-0.5">{s.icon}</span>

@@ -17,13 +17,14 @@ export default function Page() {
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([date, stats]) => ({ date, ...stats }))
 
-  const generatedAt = new Date().toLocaleString("ja-JP", {
+  const generatedAt = new Date().toLocaleString("en-US", {
     timeZone: "Asia/Tokyo",
     year: "numeric",
-    month: "2-digit",
+    month: "short",
     day: "2-digit",
     hour: "2-digit",
     minute: "2-digit",
+    hour12: false,
   })
 
   return (
@@ -33,7 +34,7 @@ export default function Page() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Claude Token Dashboard</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            ~/.claude/projects/ &nbsp;·&nbsp; {generatedAt} JST
+            ~/.claude/projects/ &nbsp;·&nbsp; {generatedAt} (JST)
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -58,7 +59,7 @@ export default function Page() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base font-semibold text-foreground">
-            日別トークン消費
+            Daily Token Usage
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -70,7 +71,7 @@ export default function Page() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base font-semibold text-foreground">
-            プロジェクト別トークン消費
+            Token Usage by Project
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">

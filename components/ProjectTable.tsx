@@ -22,13 +22,14 @@ function fmt(n: number): string {
 function fmtDatetime(iso: string): string {
   if (!iso) return "—"
   try {
-    return new Date(iso).toLocaleString("ja-JP", {
+    return new Date(iso).toLocaleString("en-US", {
       timeZone: "Asia/Tokyo",
       year: "numeric",
-      month: "2-digit",
+      month: "short",
       day: "2-digit",
       hour: "2-digit",
       minute: "2-digit",
+      hour12: false,
     })
   } catch {
     return iso.slice(0, 16).replace("T", " ")
@@ -45,7 +46,7 @@ function SessionRows({ sessions }: { sessions: SessionData[] }) {
               <tr className="border-b border-border/40 bg-muted/30">
                 <th className="pl-10 pr-3 py-2 text-left font-medium text-muted-foreground w-8" />
                 <th className="px-3 py-2 text-left font-medium text-muted-foreground">Session ID</th>
-                <th className="px-3 py-2 text-left font-medium text-muted-foreground">開始日時</th>
+                <th className="px-3 py-2 text-left font-medium text-muted-foreground">Started</th>
                 <th className="px-3 py-2 text-right font-medium text-muted-foreground">Input</th>
                 <th className="px-3 py-2 text-right font-medium text-muted-foreground">Output</th>
                 <th className="px-3 py-2 text-right font-medium text-muted-foreground">Cost</th>
@@ -159,7 +160,7 @@ export default function ProjectTable({ byProject, byProjectClaudeMd, byProjectSe
                   <td className="px-4 py-3 text-right font-mono text-xs text-muted-foreground hidden lg:table-cell">{fmt(row.cacheCreate)}</td>
                   <td className="px-4 py-3 text-right font-mono text-xs hidden xl:table-cell">
                     {isHeavyClaudeMd ? (
-                      <span className="text-orange-400 font-semibold" title="CLAUDE.mdが重い可能性があります（5KB以上）">
+                      <span className="text-orange-400 font-semibold" title="CLAUDE.md may be too large (≥5 KB)">
                         ⚠ {claudeMdLabel}
                       </span>
                     ) : (

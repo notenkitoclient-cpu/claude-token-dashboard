@@ -7,17 +7,17 @@ const PLAN_OPTIONS: { value: Plan; label: string; description: string }[] = [
   {
     value: "Pro",
     label: "Claude Pro",
-    description: "月額固定サブスク。トークン消費量（%）で判断したい。",
+    description: "Fixed monthly subscription. Track usage by token volume.",
   },
   {
     value: "Max",
     label: "Claude Max",
-    description: "高容量サブスク。トークン消費量（%）で判断したい。",
+    description: "High-volume subscription. Track usage by token volume.",
   },
   {
     value: "API",
     label: "API / Developer",
-    description: "従量課金。ドルコストで判断したい。",
+    description: "Pay-as-you-go. Track usage by dollar cost.",
   },
 ]
 
@@ -31,9 +31,9 @@ export default function SettingsModal() {
       <button
         onClick={() => setOpen(true)}
         className="flex items-center gap-1.5 rounded-lg border border-border bg-secondary px-3 py-1.5 text-xs font-medium text-secondary-foreground hover:bg-secondary/80 transition-colors"
-        aria-label="設定"
+        aria-label="Settings"
       >
-        ⚙ 設定
+        ⚙ Settings
       </button>
 
       {/* Modal overlay */}
@@ -45,11 +45,11 @@ export default function SettingsModal() {
           <div className="w-full max-w-sm rounded-xl border border-border bg-card shadow-2xl mx-4">
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-              <h2 className="text-base font-semibold">設定</h2>
+              <h2 className="text-base font-semibold">Settings</h2>
               <button
                 onClick={() => setOpen(false)}
                 className="text-muted-foreground hover:text-foreground transition-colors text-lg leading-none"
-                aria-label="閉じる"
+                aria-label="Close"
               >
                 ✕
               </button>
@@ -58,7 +58,7 @@ export default function SettingsModal() {
             {/* Body */}
             <div className="px-6 py-5 space-y-3">
               <p className="text-xs text-muted-foreground mb-4">
-                プランを選択するとコスト表示の軸が変わります。
+                Select your plan to change how costs are displayed.
               </p>
               {PLAN_OPTIONS.map((opt) => {
                 const active = plan === opt.value
