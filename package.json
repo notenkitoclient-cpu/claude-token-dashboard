@@ -1,6 +1,6 @@
 {
   "name": "@notenkidev/claude-token-dashboard",
-  "version": "0.1.15",
+  "version": "0.1.16",
   "description": "Visualize your Claude Code token usage by project and date",
   "bin": {
     "claude-token-dashboard": "bin/cli.js"
@@ -18,7 +18,8 @@
     "eslint.config.mjs",
     "next-env.d.ts",
     "screenshot.v2-1.png",
-    "screenshot.v2-2.png"
+    "screenshot.v2-2.png",
+    "types"
   ],
   "scripts": {
     "dev": "next dev",
