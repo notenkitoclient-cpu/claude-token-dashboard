@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation"
 const NAV_ITEMS = [
   { href: "/",          label: "Dashboard" },
   { href: "/activity",  label: "Activity"  },
+  { href: "/security",  label: "Security"  },
 ]
 
 export default function NavBar() {
