@@ -1,4 +1,5 @@
 import { getDb, getRiskLevel, projectFromCwd, type ActionRow } from "@/lib/actionsDb"
+import { calcCost } from "@/lib/pricing"
 
 export const dynamic = "force-dynamic"
 
@@ -16,10 +17,23 @@ export async function POST(request: Request) {
     const risk_level = getRiskLevel(tool_name, tool_input)
     const project    = projectFromCwd(cwd)
 
+    // Extract token usage from hook payload (various field names Claude Code may send)
+    const usage = (body.usage ?? body.tokenUsage ?? body.token_usage ?? null) as Record<string, number> | null
+    let token_cost: number | null = null
+    if (usage && typeof usage === "object") {
+      token_cost = calcCost({
+        input:       Number(usage.input_tokens               ?? 0),
+        output:      Number(usage.output_tokens              ?? 0),
+        cacheCreate: Number(usage.cache_creation_input_tokens ?? 0),
+        cacheRead:   Number(usage.cache_read_input_tokens    ?? 0),
+      })
+      if (token_cost === 0) token_cost = null  // don't store zero (no usage data)
+    }
+
     getDb().prepare(`
-      INSERT INTO actions (session_id, timestamp, tool_name, tool_input, risk_level, project)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `).run(session_id, timestamp, tool_name, JSON.stringify(tool_input), risk_level, project)
+      INSERT INTO actions (session_id, timestamp, tool_name, tool_input, risk_level, project, token_cost)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `).run(session_id, timestamp, tool_name, JSON.stringify(tool_input), risk_level, project, token_cost)
 
     return Response.json({ ok: true })
   } catch (err) {

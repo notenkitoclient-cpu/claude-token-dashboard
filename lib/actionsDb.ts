@@ -12,6 +12,7 @@ export interface ActionRow {
   tool_input: string   // JSON string
   risk_level: RiskLevel
   project: string
+  token_cost: number | null
 }
 
 const DB_PATH = path.join(os.homedir(), ".claude", "token-dashboard-actions.db")
@@ -29,10 +30,13 @@ export function getDb(): DatabaseSync {
         tool_name   TEXT NOT NULL,
         tool_input  TEXT NOT NULL DEFAULT '{}',
         risk_level  TEXT NOT NULL DEFAULT 'low',
-        project     TEXT NOT NULL DEFAULT ''
+        project     TEXT NOT NULL DEFAULT '',
+        token_cost  REAL
       );
       CREATE INDEX IF NOT EXISTS idx_ts ON actions(timestamp DESC);
     `)
+    // Migrate existing DBs that don't yet have token_cost
+    try { _db.exec("ALTER TABLE actions ADD COLUMN token_cost REAL") } catch { /* already exists */ }
   }
   return _db
 }

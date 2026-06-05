@@ -51,6 +51,15 @@ function RiskBadge({ level }: { level: RiskLevel }) {
   )
 }
 
+function CostBadge({ cost }: { cost: number }) {
+  const label = cost >= 0.01 ? `$${cost.toFixed(3)}` : "<$0.001"
+  return (
+    <span className="inline-flex items-center rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-mono font-semibold text-emerald-400">
+      {label}
+    </span>
+  )
+}
+
 function Stats({ rows }: { rows: ActionRow[] }) {
   const counts = rows.reduce(
     (acc, r) => { acc[r.risk_level] = (acc[r.risk_level] ?? 0) + 1; return acc },
@@ -165,6 +174,7 @@ export default function ActivityFeed() {
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="text-sm font-medium font-mono">{row.tool_name}</span>
                       <RiskBadge level={row.risk_level} />
+                      {row.token_cost != null && <CostBadge cost={row.token_cost} />}
                       {row.project && (
                         <span className="text-xs text-muted-foreground font-mono truncate max-w-[200px]" title={row.project}>
                           {row.project}
