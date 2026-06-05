@@ -75,17 +75,34 @@ function Stats({ rows }: { rows: ActionRow[] }) {
   )
 }
 
+const TOOL_FILTERS = ["All", "Bash", "Read", "Edit", "Write"] as const
+type ToolFilter = typeof TOOL_FILTERS[number]
+
 export default function ActivityFeed() {
-  const [rows, setRows]           = useState<ActionRow[]>([])
-  const [loading, setLoading]     = useState(true)
-  const [error, setError]         = useState<string | null>(null)
-  const [filter, setFilter]       = useState<RiskLevel | "all">("all")
-  const [autoRefresh, setAuto]    = useState(true)
-  const [expanded, setExpanded]   = useState<number | null>(null)
+  const [rows, setRows]               = useState<ActionRow[]>([])
+  const [loading, setLoading]         = useState(true)
+  const [error, setError]             = useState<string | null>(null)
+  const [filter, setFilter]           = useState<RiskLevel | "all">("all")
+  const [projectFilter, setProject]   = useState("all")
+  const [toolFilter, setTool]         = useState<ToolFilter>("All")
+  const [projects, setProjects]       = useState<string[]>([])
+  const [autoRefresh, setAuto]        = useState(true)
+  const [expanded, setExpanded]       = useState<number | null>(null)
+
+  useEffect(() => {
+    fetch("/api/actions?meta=projects")
+      .then((r) => r.json())
+      .then((data: string[]) => setProjects(data))
+      .catch(() => {/* ignore */})
+  }, [])
 
   const fetch_ = useCallback(async () => {
     try {
-      const url = filter === "all" ? "/api/actions" : `/api/actions?risk=${filter}`
+      const params = new URLSearchParams()
+      if (filter !== "all")    params.set("risk",    filter)
+      if (projectFilter !== "all") params.set("project", projectFilter)
+      if (toolFilter !== "All")    params.set("tool",    toolFilter)
+      const url = `/api/actions${params.size ? "?" + params : ""}`
       const res = await fetch(url)
       if (!res.ok) throw new Error(`${res.status}`)
       setRows(await res.json())
@@ -95,7 +112,7 @@ export default function ActivityFeed() {
     } finally {
       setLoading(false)
     }
-  }, [filter])
+  }, [filter, projectFilter, toolFilter])
 
   useEffect(() => { fetch_() }, [fetch_])
 
@@ -109,6 +126,7 @@ export default function ActivityFeed() {
     <div className="space-y-4">
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-3">
+        {/* Risk filter */}
         <div className="flex rounded-lg border border-border overflow-hidden text-xs">
           {(["all", "high", "medium", "low"] as const).map((v) => (
             <button
@@ -122,6 +140,36 @@ export default function ActivityFeed() {
             </button>
           ))}
         </div>
+
+        {/* Tool filter */}
+        <div className="flex rounded-lg border border-border overflow-hidden text-xs">
+          {TOOL_FILTERS.map((v) => (
+            <button
+              key={v}
+              onClick={() => setTool(v)}
+              className={`px-3 py-1.5 transition-colors ${
+                toolFilter === v ? "bg-primary text-primary-foreground" : "hover:bg-muted/60"
+              }`}
+            >
+              {v}
+            </button>
+          ))}
+        </div>
+
+        {/* Project filter */}
+        {projects.length > 0 && (
+          <select
+            value={projectFilter}
+            onChange={(e) => setProject(e.target.value)}
+            className="rounded-lg border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+          >
+            <option value="all">All Projects</option>
+            {projects.map((p) => (
+              <option key={p} value={p}>{p}</option>
+            ))}
+          </select>
+        )}
+
         <button
           onClick={() => setAuto((a) => !a)}
           className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs transition-colors ${

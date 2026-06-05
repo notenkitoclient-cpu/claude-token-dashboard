@@ -3,6 +3,7 @@
 import { useState } from "react"
 import type { TokenStats, SessionData } from "@/lib/collect"
 import { calcCost, fmtCost } from "@/lib/pricing"
+import ClaudeMdModal from "@/components/ClaudeMdModal"
 
 interface Props {
   byProject: Record<string, TokenStats>
@@ -76,7 +77,8 @@ function SessionRows({ sessions }: { sessions: SessionData[] }) {
 }
 
 export default function ProjectTable({ byProject, byProjectClaudeMd, byProjectSessions }: Props) {
-  const [expandedProject, setExpandedProject] = useState<string | null>(null)
+  const [expandedProject, setExpandedProject]     = useState<string | null>(null)
+  const [claudeMdProject,  setClaudeMdProject]    = useState<string | null>(null)
 
   const rows = Object.entries(byProject)
     .map(([project, stats]) => ({
@@ -93,6 +95,13 @@ export default function ProjectTable({ byProject, byProjectClaudeMd, byProjectSe
   const totalCost = rows.reduce((s, r) => s + r.cost, 0)
 
   return (
+    <>
+    {claudeMdProject && (
+      <ClaudeMdModal
+        project={claudeMdProject}
+        onClose={() => setClaudeMdProject(null)}
+      />
+    )}
     <div className="overflow-x-auto rounded-xl border border-border">
       <table className="w-full text-sm">
         <thead>
@@ -159,14 +168,18 @@ export default function ProjectTable({ byProject, byProjectClaudeMd, byProjectSe
                   <td className="px-4 py-3 text-right font-mono text-xs text-muted-foreground hidden md:table-cell">{fmt(row.cacheRead)}</td>
                   <td className="px-4 py-3 text-right font-mono text-xs text-muted-foreground hidden lg:table-cell">{fmt(row.cacheCreate)}</td>
                   <td className="px-4 py-3 text-right font-mono text-xs hidden xl:table-cell">
-                    {isHeavyClaudeMd ? (
-                      <span className="text-orange-400 font-semibold" title="CLAUDE.md may be too large (≥5 KB)">
-                        ⚠ {claudeMdLabel}
-                      </span>
+                    {row.claudeMdBytes !== null ? (
+                      <button
+                        onClick={e => { e.stopPropagation(); setClaudeMdProject(row.project) }}
+                        className={`underline decoration-dotted underline-offset-2 hover:no-underline transition-colors ${
+                          isHeavyClaudeMd ? "text-orange-400 font-semibold" : "text-muted-foreground hover:text-foreground"
+                        }`}
+                        title={isHeavyClaudeMd ? "CLAUDE.md may be too large (≥5 KB) — click to view/edit" : "Click to view/edit CLAUDE.md"}
+                      >
+                        {isHeavyClaudeMd && "⚠ "}{claudeMdLabel}
+                      </button>
                     ) : (
-                      <span className={row.claudeMdBytes !== null ? "text-muted-foreground" : "text-muted-foreground/40"}>
-                        {claudeMdLabel}
-                      </span>
+                      <span className="text-muted-foreground/40">{claudeMdLabel}</span>
                     )}
                   </td>
                   <td className="px-4 py-3 text-right font-mono text-xs text-muted-foreground">{fmt(row.total)}</td>
@@ -195,5 +208,6 @@ export default function ProjectTable({ byProject, byProjectClaudeMd, byProjectSe
         </tfoot>
       </table>
     </div>
+    </>
   )
 }

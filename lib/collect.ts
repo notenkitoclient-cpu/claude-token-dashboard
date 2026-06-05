@@ -21,6 +21,7 @@ export interface DashboardData {
   byDay: Record<string, TokenStats>
   byProjectClaudeMd: Record<string, number | null> // bytes, null = not found
   byProjectSessions: Record<string, SessionData[]> // newest-first
+  byProjectCwd: Record<string, string>             // label → first seen cwd
   totalFiles: number
   totalEntries: number
   skippedDup: number
@@ -87,7 +88,7 @@ export function collect(): DashboardData {
   let skippedDup = 0
 
   if (!fs.existsSync(BASE)) {
-    return { byProject, byDay, byProjectClaudeMd: {}, byProjectSessions: {}, totalFiles, totalEntries, skippedDup }
+    return { byProject, byDay, byProjectClaudeMd: {}, byProjectSessions: {}, byProjectCwd: {}, totalFiles, totalEntries, skippedDup }
   }
 
   const projectDirs = fs.readdirSync(BASE).sort()
@@ -180,5 +181,5 @@ export function collect(): DashboardData {
       .sort((a, b) => b.startedAt.localeCompare(a.startedAt))
   }
 
-  return { byProject, byDay, byProjectClaudeMd, byProjectSessions, totalFiles, totalEntries, skippedDup }
+  return { byProject, byDay, byProjectClaudeMd, byProjectSessions, byProjectCwd: cwdByLabel, totalFiles, totalEntries, skippedDup }
 }

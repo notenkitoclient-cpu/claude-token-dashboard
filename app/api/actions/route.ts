@@ -47,25 +47,26 @@ export async function GET(request: Request) {
     const limit   = Math.min(Number(searchParams.get("limit") ?? 200), 1000)
     const project = searchParams.get("project")
     const risk    = searchParams.get("risk")
+    const tool    = searchParams.get("tool")
+    const meta    = searchParams.get("meta")
 
-    let rows: Record<string, unknown>[]
-    if (project && risk) {
-      rows = getDb().prepare(
-        "SELECT * FROM actions WHERE project=? AND risk_level=? ORDER BY timestamp DESC LIMIT ?"
-      ).all(project, risk, limit)
-    } else if (project) {
-      rows = getDb().prepare(
-        "SELECT * FROM actions WHERE project=? ORDER BY timestamp DESC LIMIT ?"
-      ).all(project, limit)
-    } else if (risk) {
-      rows = getDb().prepare(
-        "SELECT * FROM actions WHERE risk_level=? ORDER BY timestamp DESC LIMIT ?"
-      ).all(risk, limit)
-    } else {
-      rows = getDb().prepare(
-        "SELECT * FROM actions ORDER BY timestamp DESC LIMIT ?"
-      ).all(limit)
+    if (meta === "projects") {
+      const rows = getDb().prepare(
+        "SELECT DISTINCT project FROM actions WHERE project IS NOT NULL AND project != '' ORDER BY project"
+      ).all() as { project: string }[]
+      return Response.json(rows.map((r) => r.project))
     }
+
+    const conditions: string[] = []
+    const params: unknown[] = []
+    if (project) { conditions.push("project=?");    params.push(project) }
+    if (risk)    { conditions.push("risk_level=?"); params.push(risk) }
+    if (tool)    { conditions.push("tool_name=?");  params.push(tool) }
+
+    const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : ""
+    const rows = getDb().prepare(
+      `SELECT * FROM actions ${where} ORDER BY timestamp DESC LIMIT ?`
+    ).all(...params, limit)
 
     return Response.json(rows as unknown as ActionRow[])
   } catch (err) {
