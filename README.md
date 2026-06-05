@@ -2,6 +2,14 @@
 
 [![Featured on Product Hunt](https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=claude-token-dashboard&theme=light)](https://www.producthunt.com/posts/claude-token-dashboard)
 
+<table>
+  <tr>
+    <td align="center"><img src="docs/screenshot-dashboard.png" /><br /><sub>Dashboard — token &amp; cost by project</sub></td>
+    <td align="center"><img src="docs/screenshot-activity.png" /><br /><sub>Activity — real-time action log</sub></td>
+    <td align="center"><img src="docs/screenshot-security.png" /><br /><sub>Security — environment risk score</sub></td>
+  </tr>
+</table>
+
 > Visualize your [Claude Code](https://claude.ai/code) token usage by project and date — built with Next.js + Tailwind.
 
 ![Summary cards and daily chart](screenshot.v2-1.png)
