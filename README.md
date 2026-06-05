@@ -65,6 +65,36 @@ This app:
 
 Hit **Refresh** to re-read the files without restarting the server.
 
+## Activity Log (New in v0.1.16)
+
+Claude Code hooks経由でリアルタイムに行動ログを取得する機能。
+
+### セットアップ
+
+`~/.claude/settings.json` に以下を追加：
+
+```json
+{
+  "hooks": {
+    "PostToolUse": [{
+      "matcher": ".*",
+      "hooks": [{
+        "type": "command",
+        "command": "curl -sf -X POST http://localhost:3000/api/actions -H 'Content-Type: application/json' --data-binary @- 2>/dev/null || true"
+      }]
+    }]
+  }
+}
+```
+
+### 取得できる情報
+
+- File reads / edits / writes
+- Bash commands（risk level付き）
+- API calls
+
+http://localhost:3000/activity で確認できます。
+
 ## Tech stack
 
 - [Next.js 16](https://nextjs.org) — App Router, Server Components
