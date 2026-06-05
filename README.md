@@ -1,5 +1,7 @@
 # Claude Token Dashboard
 
+[![Featured on Product Hunt](https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=claude-token-dashboard&theme=light)](https://www.producthunt.com/posts/claude-token-dashboard)
+
 > Visualize your [Claude Code](https://claude.ai/code) token usage by project and date — built with Next.js + Tailwind.
 
 ![Summary cards and daily chart](screenshot.v2-1.png)
