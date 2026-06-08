@@ -53,6 +53,25 @@ export async function POST(req: Request) {
   const key = cacheKey(projectLabel, lastMessage)
   const cache = loadCache()
 
+  function extractText(raw: string): string {
+    try {
+      const parsed = JSON.parse(raw)
+      if (typeof parsed === "string") return parsed
+      if (Array.isArray(parsed)) {
+        return parsed
+          .filter((p) => typeof p === "object" && p !== null && (p as Record<string, unknown>).type === "text")
+          .map((p) => ((p as Record<string, unknown>).text as string) ?? "")
+          .join(" ")
+          .trim() || raw
+      }
+      return raw
+    } catch {
+      return raw
+    }
+  }
+
+  const cleanedMessage = extractText(lastMessage).slice(0, 200)
+
   if (cache[key]) {
     return Response.json({ hint: cache[key] })
   }
@@ -65,7 +84,7 @@ export async function POST(req: Request) {
   const client = new Anthropic({ apiKey })
 
   const userMessage = `Project: ${projectLabel}
-Last message: ${lastMessage}
+Last message: ${cleanedMessage}
 Stagnation: ${stagnationHours}h, Incomplete tasks: ${incompleteTasks}, Error rate: ${Math.round(errorRate * 100)}%
 
 What should the developer do next? Answer in 2-3 sentences max.`
