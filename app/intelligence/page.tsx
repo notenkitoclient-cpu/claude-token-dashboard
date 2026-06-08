@@ -11,12 +11,18 @@ import path from "path"
 
 const ASSIST_CACHE_FILE = path.join(os.homedir(), ".claude-dashboard", "assist-cache.json")
 
-function loadAssistCache(): Record<string, string> {
+type CacheEntry = string | { hint: string; timestamp: string; projectLabel: string }
+
+function loadAssistCache(): Record<string, CacheEntry> {
   try {
-    return JSON.parse(fs.readFileSync(ASSIST_CACHE_FILE, "utf-8")) as Record<string, string>
+    return JSON.parse(fs.readFileSync(ASSIST_CACHE_FILE, "utf-8")) as Record<string, CacheEntry>
   } catch {
     return {}
   }
+}
+
+function extractHint(entry: CacheEntry): string {
+  return typeof entry === "string" ? entry : entry.hint
 }
 
 function assistKey(projectLabel: string, lastMessage: string): string {
@@ -88,7 +94,11 @@ export default function IntelligencePage() {
         lastUpdatedAt: proj.lastUpdatedAt,
         lastUserMessage,
         lastMessageDisplay: lastUserMessage ? displayMessage(lastUserMessage) : null,
-        cachedHint: lastUserMessage ? assistCache[assistKey(label, lastUserMessage)] : undefined,
+        cachedHint: lastUserMessage
+          ? (assistCache[assistKey(label, lastUserMessage)] !== undefined
+            ? extractHint(assistCache[assistKey(label, lastUserMessage)])
+            : undefined)
+          : undefined,
         hasClaudeMd: findClaudeMd(memProj?.cwd),
       }
     })

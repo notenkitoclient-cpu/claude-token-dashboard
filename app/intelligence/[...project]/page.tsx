@@ -15,12 +15,38 @@ const ASSIST_CACHE_FILE = path.join(os.homedir(), ".claude-dashboard", "assist-c
 
 const EMAIL_RE = /[\w.+-]+@[\w.-]+\.[a-z]{2,}/gi
 
-function loadAssistCache(): Record<string, string> {
+type CacheEntry = string | { hint: string; timestamp: string; projectLabel: string }
+
+function loadAssistCache(): Record<string, CacheEntry> {
   try {
-    return JSON.parse(fs.readFileSync(ASSIST_CACHE_FILE, "utf-8")) as Record<string, string>
+    return JSON.parse(fs.readFileSync(ASSIST_CACHE_FILE, "utf-8")) as Record<string, CacheEntry>
   } catch {
     return {}
   }
+}
+
+function extractHint(entry: CacheEntry): string {
+  return typeof entry === "string" ? entry : entry.hint
+}
+
+function loadHintHistory(projectLabel: string): Array<{ hint: string; timestamp: string }> {
+  let cache: Record<string, CacheEntry> = {}
+  try {
+    cache = JSON.parse(fs.readFileSync(ASSIST_CACHE_FILE, "utf-8")) as Record<string, CacheEntry>
+  } catch {
+    return []
+  }
+
+  const entries: Array<{ hint: string; timestamp: string }> = []
+  for (const value of Object.values(cache)) {
+    if (typeof value === "string") continue
+    if (value.projectLabel !== projectLabel) continue
+    entries.push({ hint: value.hint, timestamp: value.timestamp })
+  }
+
+  return entries
+    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+    .slice(0, 10)
 }
 
 function assistKey(projectLabel: string, lastMessage: string): string {
@@ -97,8 +123,10 @@ export default async function ProjectDetailPage({
   const waitingForInput = proj.waitingForInput
   const status = waitingForInput ? "waiting" : proj.stagnationHours < 1 ? "processing" : "idle"
   const lastUserMessage = memProj?.lastUserMessage ?? null
-  const cachedHint = lastUserMessage ? assistCache[assistKey(label, lastUserMessage)] : undefined
+  const rawHint = lastUserMessage ? assistCache[assistKey(label, lastUserMessage)] : undefined
+  const cachedHint = rawHint !== undefined ? extractHint(rawHint) : undefined
   const hasClaudeMd = findClaudeMd(memProj?.cwd)
+  const hintHistory = loadHintHistory(label)
 
   const stagnationDisplay =
     proj.stagnationHours < 24
@@ -171,6 +199,32 @@ export default async function ProjectDetailPage({
 
       {/* CLAUDE.md */}
       {hasClaudeMd && <ClaudeMdButton project={label} />}
+
+      {/* Hint History */}
+      {hintHistory.length > 0 && (
+        <div className="space-y-3">
+          <p className="text-xs text-muted-foreground uppercase tracking-wide">
+            Hint History · {hintHistory.length}
+          </p>
+          <div className="space-y-2">
+            {hintHistory.map((entry, i) => (
+              <div key={i} className="rounded-lg border border-border p-3 space-y-1">
+                <p className="text-[10px] text-muted-foreground tabular-nums">
+                  {new Date(entry.timestamp).toLocaleString("en-US", {
+                    timeZone: "Asia/Tokyo",
+                    month: "short",
+                    day: "2-digit",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hour12: false,
+                  })} JST
+                </p>
+                <p className="text-xs text-foreground whitespace-pre-wrap">{entry.hint}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </main>
   )
 }

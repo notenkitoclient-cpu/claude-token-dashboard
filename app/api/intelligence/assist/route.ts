@@ -9,7 +9,8 @@ export const dynamic = "force-dynamic"
 const CACHE_DIR = path.join(os.homedir(), ".claude-dashboard")
 const CACHE_FILE = path.join(CACHE_DIR, "assist-cache.json")
 
-type CacheStore = Record<string, string>
+type CacheEntry = string | { hint: string; timestamp: string; projectLabel: string }
+type CacheStore = Record<string, CacheEntry>
 
 function loadCache(): CacheStore {
   try {
@@ -22,6 +23,10 @@ function loadCache(): CacheStore {
 function saveCache(cache: CacheStore): void {
   if (!fs.existsSync(CACHE_DIR)) fs.mkdirSync(CACHE_DIR, { recursive: true })
   fs.writeFileSync(CACHE_FILE, JSON.stringify(cache, null, 2), "utf-8")
+}
+
+function extractHint(entry: CacheEntry): string {
+  return typeof entry === "string" ? entry : entry.hint
 }
 
 function cacheKey(projectLabel: string, lastMessage: string): string {
@@ -73,7 +78,7 @@ export async function POST(req: Request) {
   const cleanedMessage = extractText(lastMessage).slice(0, 200)
 
   if (cache[key]) {
-    return Response.json({ hint: cache[key] })
+    return Response.json({ hint: extractHint(cache[key]) })
   }
 
   const apiKey = process.env.ANTHROPIC_API_KEY
@@ -103,7 +108,7 @@ What should the developer do next? Answer in 2-3 sentences max.`
     }
 
     const hint = textBlock.text.trim()
-    cache[key] = hint
+    cache[key] = { hint, timestamp: new Date().toISOString(), projectLabel }
     saveCache(cache)
 
     return Response.json({ hint })
