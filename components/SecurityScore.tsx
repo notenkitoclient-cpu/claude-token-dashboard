@@ -3,6 +3,19 @@
 import { useEffect, useState } from "react"
 import type { SecurityScoreResult, ScoreFinding, Severity } from "@/lib/securityScore"
 
+interface ProjectScore {
+  project: string
+  settingsFound: boolean
+  score: number | null
+  grade: string | null
+  label: string | null
+}
+
+interface SecurityResponse {
+  global: SecurityScoreResult
+  projects: ProjectScore[]
+}
+
 // ── Score ring ──────────────────────────────────────────────────────────────
 function ScoreRing({ score, color }: { score: number; color: string }) {
   const size = 200
@@ -72,16 +85,18 @@ function shareText(result: SecurityScoreResult): string {
 
 // ── Main component ───────────────────────────────────────────────────────────
 export default function SecurityScore() {
-  const [result, setResult] = useState<SecurityScoreResult | null>(null)
+  const [data,   setData]   = useState<SecurityResponse | null>(null)
   const [error,  setError]  = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
 
   useEffect(() => {
     fetch("/api/security")
       .then(r => r.json())
-      .then(setResult)
+      .then(setData)
       .catch(e => setError(String(e)))
   }, [])
+
+  const result = data?.global ?? null
 
   if (error) {
     return (
@@ -164,6 +179,42 @@ export default function SecurityScore() {
         {[...result.findings.filter(f => !f.passed), ...result.findings.filter(f => f.passed)]
           .map(f => <FindingRow key={f.id} f={f} />)}
       </div>
+
+      {/* Project Scores */}
+      {data!.projects.length > 0 && (
+        <div className="space-y-2">
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide px-1">
+            Project Scores
+            <span className="ml-2 text-[10px] font-normal normal-case">
+              (local .claude/settings.json — top 5)
+            </span>
+          </h2>
+          <div className="space-y-1.5">
+            {data!.projects.map(p => (
+              <div key={p.project} className="flex items-center gap-3 rounded-lg border border-border bg-muted/5 px-4 py-2.5">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-mono truncate" title={p.project}>{p.project}</p>
+                  {!p.settingsFound && (
+                    <p className="text-xs text-muted-foreground/50">No local config</p>
+                  )}
+                </div>
+                {p.settingsFound && p.score !== null ? (
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="text-xs font-semibold" style={{ color: scoreColor(p.score) }}>
+                      {p.grade}
+                    </span>
+                    <span className="text-sm font-mono font-bold tabular-nums" style={{ color: scoreColor(p.score) }}>
+                      {p.score}
+                    </span>
+                  </div>
+                ) : (
+                  <span className="text-xs text-muted-foreground/30 shrink-0">—</span>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <p className="text-xs text-muted-foreground text-center">
         Reads <code className="font-mono bg-muted px-1 py-0.5 rounded text-[11px]">~/.claude/settings.json</code> locally — no data leaves your machine.

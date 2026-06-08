@@ -29,9 +29,9 @@ export interface SecurityScoreResult {
   settingsFound: boolean
 }
 
-function readSettings(): Settings | null {
+function readSettings(settingsPath = SETTINGS_PATH): Settings | null {
   try {
-    return JSON.parse(fs.readFileSync(SETTINGS_PATH, "utf-8")) as Settings
+    return JSON.parse(fs.readFileSync(settingsPath, "utf-8")) as Settings
   } catch {
     return null
   }
@@ -46,8 +46,8 @@ function grade(score: number): { grade: string; label: string } {
   return              { grade: "F",  label: "Critical" }
 }
 
-export function computeSecurityScore(): SecurityScoreResult {
-  const settings = readSettings()
+export function computeSecurityScore(settingsPath = SETTINGS_PATH): SecurityScoreResult {
+  const settings = readSettings(settingsPath)
 
   if (!settings) {
     return {
