@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
+import { useRouter } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
 import HintButton from "./HintButton"
 import ClaudeMdModal from "@/components/ClaudeMdModal"
@@ -65,6 +66,7 @@ function ScoreBar({ score }: { score: number }) {
 }
 
 export default function ProjectGrid({ cards }: { cards: ProjectCardData[] }) {
+  const router = useRouter()
   const [filter, setFilter] = useState<FilterValue>("all")
   const [sort, setSort] = useState<SortValue>("score")
   const [claudeMdProject, setClaudeMdProject] = useState<string | null>(null)
@@ -128,7 +130,20 @@ export default function ProjectGrid({ cards }: { cards: ProjectCardData[] }) {
         {filtered.map((card) => (
           <div
             key={card.label}
-            className={`rounded-lg border p-4 flex flex-col gap-3 transition-colors ${
+            onClick={() =>
+              router.push(
+                `/intelligence/${card.label.split("/").map(encodeURIComponent).join("/")}`,
+              )
+            }
+            role="link"
+            tabIndex={0}
+            onKeyDown={(e) =>
+              e.key === "Enter" &&
+              router.push(
+                `/intelligence/${card.label.split("/").map(encodeURIComponent).join("/")}`,
+              )
+            }
+            className={`rounded-lg border p-4 flex flex-col gap-3 transition-colors cursor-pointer ${
               card.isNext
                 ? "border-primary bg-primary/5"
                 : card.status === "waiting"
@@ -178,22 +193,24 @@ export default function ProjectGrid({ cards }: { cards: ProjectCardData[] }) {
               </p>
             )}
 
-            {/* Hint button */}
+            {/* Hint button — stop propagation to prevent card navigation */}
             {card.lastUserMessage && (
-              <HintButton
-                projectLabel={card.label}
-                lastMessage={card.lastUserMessage}
-                stagnationHours={card.stagnationHours}
-                incompleteTasks={card.incompleteTasks}
-                errorRate={card.errorRate}
-                initialHint={card.cachedHint}
-              />
+              <div onClick={(e) => e.stopPropagation()}>
+                <HintButton
+                  projectLabel={card.label}
+                  lastMessage={card.lastUserMessage}
+                  stagnationHours={card.stagnationHours}
+                  incompleteTasks={card.incompleteTasks}
+                  errorRate={card.errorRate}
+                  initialHint={card.cachedHint}
+                />
+              </div>
             )}
 
-            {/* CLAUDE.md button */}
+            {/* CLAUDE.md button — stop propagation to prevent card navigation */}
             {card.hasClaudeMd && (
               <button
-                onClick={() => setClaudeMdProject(card.label)}
+                onClick={(e) => { e.stopPropagation(); setClaudeMdProject(card.label) }}
                 className="mt-auto self-start text-xs rounded-md border border-border px-2 py-1 text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
               >
                 CLAUDE.md
