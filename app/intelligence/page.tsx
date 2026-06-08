@@ -37,6 +37,19 @@ function StatusBadge({ status }: { status: Status }) {
   )
 }
 
+const EMAIL_RE = /[\w.+-]+@[\w.-]+\.[a-z]{2,}/gi
+
+function displayLabel(label: string): string {
+  const masked = label.replace(EMAIL_RE, "[email]")
+  const parts = masked.split("/")
+  return parts.slice(-2).join("/")
+}
+
+function displayMessage(text: string): string {
+  const masked = text.replace(EMAIL_RE, "[email]")
+  return masked.length > 60 ? masked.slice(0, 60) + "…" : masked
+}
+
 function ScoreBar({ score }: { score: number }) {
   const color =
     score >= 60 ? "bg-red-500" : score >= 30 ? "bg-amber-500" : "bg-emerald-500"
@@ -84,11 +97,11 @@ export default function IntelligencePage() {
             Next up
           </p>
           <p className="text-base font-semibold text-foreground">
-            {schedule.nextProject}
+            {displayLabel(schedule.nextProject)}
           </p>
           {memory.projects[schedule.nextProject]?.lastUserMessage && (
             <p className="text-xs text-muted-foreground line-clamp-1">
-              {memory.projects[schedule.nextProject].lastUserMessage}
+              {displayMessage(memory.projects[schedule.nextProject].lastUserMessage!)}
             </p>
           )}
         </div>
@@ -124,13 +137,13 @@ export default function IntelligencePage() {
                         </span>
                       )}
                       <span className="text-sm font-medium text-foreground truncate">
-                        {label}
+                        {displayLabel(label)}
                       </span>
                       <StatusBadge status={status} />
                     </div>
                     {memProj?.lastUserMessage && (
                       <p className="text-xs text-muted-foreground line-clamp-1 pl-0.5">
-                        {memProj.lastUserMessage}
+                        {displayMessage(memProj.lastUserMessage)}
                       </p>
                     )}
                   </div>
