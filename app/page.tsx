@@ -40,6 +40,13 @@ export default function Page() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <a
+            href="/api/report"
+            download
+            className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium hover:bg-muted/60 transition-colors"
+          >
+            Export Report
+          </a>
           <SettingsModal />
           <RefreshButton />
         </div>

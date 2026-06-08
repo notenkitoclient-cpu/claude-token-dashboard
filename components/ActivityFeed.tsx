@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useRef, useState, useCallback } from "react"
 import type { ActionRow, RiskLevel } from "@/lib/actionsDb"
 
 const TOOL_ICON: Record<string, string> = {
@@ -88,6 +88,19 @@ export default function ActivityFeed() {
   const [projects, setProjects]       = useState<string[]>([])
   const [autoRefresh, setAuto]        = useState(true)
   const [expanded, setExpanded]       = useState<number | null>(null)
+  const [showExport, setShowExport]   = useState(false)
+  const exportRef                     = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!showExport) return
+    function handleClick(e: MouseEvent) {
+      if (exportRef.current && !exportRef.current.contains(e.target as Node)) {
+        setShowExport(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClick)
+    return () => document.removeEventListener("mousedown", handleClick)
+  }, [showExport])
 
   useEffect(() => {
     fetch("/api/actions?meta=projects")
@@ -182,6 +195,37 @@ export default function ActivityFeed() {
           ↻ Refresh
         </button>
         {rows.length > 0 && <Stats rows={rows} />}
+
+        {/* Export dropdown — respects current filters */}
+        <div ref={exportRef} className="relative ml-auto">
+          <button
+            onClick={() => setShowExport(e => !e)}
+            className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs hover:bg-muted/60 transition-colors"
+          >
+            Export ▾
+          </button>
+          {showExport && (
+            <div className="absolute right-0 top-full mt-1 z-10 min-w-[90px] rounded-lg border border-border bg-card shadow-lg overflow-hidden">
+              {(["csv", "json"] as const).map((fmt, i) => {
+                const p = new URLSearchParams({ format: fmt })
+                if (filter !== "all")        p.set("risk",    filter)
+                if (projectFilter !== "all") p.set("project", projectFilter)
+                if (toolFilter !== "All")    p.set("tool",    toolFilter)
+                return (
+                  <a
+                    key={fmt}
+                    href={`/api/actions/export?${p}`}
+                    download
+                    onClick={() => setShowExport(false)}
+                    className={`block px-4 py-2 text-xs uppercase hover:bg-muted/60 transition-colors ${i > 0 ? "border-t border-border" : ""}`}
+                  >
+                    {fmt}
+                  </a>
+                )
+              })}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Feed */}
