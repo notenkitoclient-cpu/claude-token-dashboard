@@ -3,6 +3,7 @@ import { computeSchedule, loadSchedule } from "@/lib/intelligence/scheduler"
 import RefreshButton from "@/components/RefreshButton"
 import SettingsModal from "@/components/SettingsModal"
 import ProjectGrid, { type ProjectCardData } from "./ProjectGrid"
+import NotificationWatcher from "./NotificationWatcher"
 import crypto from "crypto"
 import fs from "fs"
 import os from "os"
@@ -106,6 +107,12 @@ export default function IntelligencePage() {
           )}
         </div>
       )}
+
+      {/* Notification watcher (client — polls for waiting projects) */}
+      <NotificationWatcher
+        initialWaiting={cards.filter((c) => c.status === "waiting").map((c) => c.label)}
+        labelToDisplay={Object.fromEntries(cards.map((c) => [c.label, c.displayName]))}
+      />
 
       {/* Project grid (client — handles filter + sort) */}
       <ProjectGrid cards={cards} />

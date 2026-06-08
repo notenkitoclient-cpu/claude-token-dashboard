@@ -1,8 +1,8 @@
-import { computeSchedule } from "@/lib/intelligence/scheduler"
+import { computeSchedule, loadSchedule } from "@/lib/intelligence/scheduler"
 
 export const dynamic = "force-dynamic"
 
 export async function GET() {
-  const data = computeSchedule()
+  const data = loadSchedule() ?? computeSchedule()
   return Response.json(data)
 }

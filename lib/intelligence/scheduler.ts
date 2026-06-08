@@ -23,7 +23,7 @@ export interface SchedulerData {
 const BASE = path.join(os.homedir(), ".claude", "projects")
 const CACHE_DIR = path.join(os.homedir(), ".claude-dashboard")
 const SCHEDULE_CACHE_FILE = path.join(CACHE_DIR, "schedule.json")
-const SCHEDULE_TTL_MS = 5 * 60 * 1000
+const SCHEDULE_TTL_MS = 60 * 1000
 
 export function loadSchedule(): SchedulerData | null {
   try {
