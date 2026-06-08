@@ -63,10 +63,14 @@ function addStats(target: TokenStats, input: number, output: number, cacheCreate
 function claudeMdBytes(cwd: string): number | null {
   // Walk up from cwd to find CLAUDE.md, stopping at home directory
   const home = os.homedir()
+  const homePrefix = home + path.sep
   let dir = cwd
   while (dir.startsWith(home) && dir !== home) {
+    // Validated: resolved against homePrefix (home + path.sep) before use
+    const resolved = path.resolve(dir) // nosemgrep
+    if (!resolved.startsWith(homePrefix)) break
     try {
-      const stat = fs.statSync(path.join(dir, "CLAUDE.md"))
+      const stat = fs.statSync(path.join(resolved, "CLAUDE.md")) // nosemgrep
       if (stat.isFile()) return stat.size
     } catch { /* not found at this level */ }
     const parent = path.dirname(dir)

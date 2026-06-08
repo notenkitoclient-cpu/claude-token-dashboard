@@ -7,9 +7,13 @@ export const dynamic = "force-dynamic"
 
 function findClaudeMdPath(cwd: string): string | null {
   const home = os.homedir()
+  const homePrefix = home + path.sep
   let dir = cwd
   while (dir.startsWith(home) && dir !== home) {
-    const candidate = path.join(dir, "CLAUDE.md")
+    // Validated: resolved against homePrefix (home + path.sep) before use
+    const resolved = path.resolve(dir) // nosemgrep
+    if (!resolved.startsWith(homePrefix)) break
+    const candidate = path.join(resolved, "CLAUDE.md") // nosemgrep
     try {
       if (fs.statSync(candidate).isFile()) return candidate
     } catch { /* not at this level */ }
@@ -28,8 +32,8 @@ function resolveFilePath(project: string): { filePath: string } | { error: strin
   const filePath = findClaudeMdPath(cwd)
   if (!filePath) return { error: "CLAUDE.md not found for this project", status: 404 }
 
-  // Security: must be under home directory
-  if (!filePath.startsWith(os.homedir())) return { error: "invalid path", status: 403 }
+  // Security: must be strictly within home directory (path.sep prevents prefix collisions)
+  if (!filePath.startsWith(os.homedir() + path.sep)) return { error: "invalid path", status: 403 }
 
   return { filePath }
 }
