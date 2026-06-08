@@ -4,9 +4,10 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 
 const NAV_ITEMS = [
-  { href: "/",          label: "Dashboard" },
-  { href: "/activity",  label: "Activity"  },
-  { href: "/security",  label: "Security"  },
+  { href: "/",             label: "Dashboard"    },
+  { href: "/activity",     label: "Activity"     },
+  { href: "/security",     label: "Security"     },
+  { href: "/intelligence", label: "Intelligence" },
 ]
 
 export default function NavBar() {
