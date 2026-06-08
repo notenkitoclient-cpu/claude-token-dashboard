@@ -15,6 +15,17 @@ export interface ActionRow {
   token_cost: number | null
 }
 
+export interface AlertRow {
+  id: number
+  session_id: string
+  timestamp: string
+  tool_name: string
+  tool_input: string   // JSON string
+  risk_level: RiskLevel
+  project: string
+  acknowledged: number  // 0 = pending, 1 = dismissed
+}
+
 const DB_PATH = path.join(os.homedir(), ".claude", "token-dashboard-actions.db")
 
 let _db: DatabaseSync | null = null
@@ -34,6 +45,17 @@ export function getDb(): DatabaseSync {
         token_cost  REAL
       );
       CREATE INDEX IF NOT EXISTS idx_ts ON actions(timestamp DESC);
+      CREATE TABLE IF NOT EXISTS alerts (
+        id           INTEGER PRIMARY KEY AUTOINCREMENT,
+        session_id   TEXT NOT NULL DEFAULT '',
+        timestamp    TEXT NOT NULL,
+        tool_name    TEXT NOT NULL,
+        tool_input   TEXT NOT NULL DEFAULT '{}',
+        risk_level   TEXT NOT NULL DEFAULT 'high',
+        project      TEXT NOT NULL DEFAULT '',
+        acknowledged INTEGER NOT NULL DEFAULT 0
+      );
+      CREATE INDEX IF NOT EXISTS idx_alerts_ack ON alerts(acknowledged, timestamp DESC);
     `)
     // Migrate existing DBs that don't yet have token_cost
     try { _db.exec("ALTER TABLE actions ADD COLUMN token_cost REAL") } catch { /* already exists */ }
@@ -41,7 +63,7 @@ export function getDb(): DatabaseSync {
   return _db
 }
 
-const HIGH_RISK = /\b(rm\s|rm$|rmdir|unlink|del\s|format\s|drop\s|truncate\s|shred|mkfs|fdisk)\b/i
+const HIGH_RISK = /\b(rm|rmdir|unlink|del|format|drop|truncate|shred|mkfs|fdisk)\b/i
 const MED_RISK  = /\b(npm|yarn|pnpm|bun|git|sudo|brew|pip|apt|yum|chmod|chown|curl|wget)\b/i
 
 export function getRiskLevel(toolName: string, toolInput: Record<string, unknown>): RiskLevel {

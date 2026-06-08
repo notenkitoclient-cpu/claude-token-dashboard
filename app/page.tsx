@@ -6,6 +6,7 @@ import DailyChart from "@/components/DailyChart"
 import RefreshButton from "@/components/RefreshButton"
 import SettingsModal from "@/components/SettingsModal"
 import TodaySummary from "@/components/TodaySummary"
+import AlertBanner from "@/components/AlertBanner"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 
 export const dynamic = "force-dynamic"
@@ -43,6 +44,9 @@ export default function Page() {
           <RefreshButton />
         </div>
       </div>
+
+      {/* High-risk pre-execution alerts */}
+      <AlertBanner />
 
       {/* Today's Summary */}
       <TodaySummary />

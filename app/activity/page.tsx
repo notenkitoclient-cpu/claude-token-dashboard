@@ -6,6 +6,13 @@ export const dynamic = "force-dynamic"
 
 const HOOK_SNIPPET = `{
   "hooks": {
+    "PreToolUse": [{
+      "matcher": ".*",
+      "hooks": [{
+        "type": "command",
+        "command": "curl -sf -X POST http://localhost:3000/api/alerts -H 'Content-Type: application/json' --data-binary @- 2>/dev/null || true"
+      }]
+    }],
     "PostToolUse": [{
       "matcher": ".*",
       "hooks": [{

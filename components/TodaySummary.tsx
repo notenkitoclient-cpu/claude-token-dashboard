@@ -8,6 +8,7 @@ interface TodayData {
   tokens: number
   actions: number
   activeProjects: number
+  projectedMonthCost: number
 }
 
 function fmtNum(n: number): string {
@@ -33,18 +34,19 @@ export default function TodaySummary() {
   }, [refresh])
 
   const cards = data ? [
-    { label: "Today's Cost",     value: fmtCost(data.cost),                    sub: "since 00:00 UTC" },
-    { label: "Today's Tokens",   value: fmtNum(data.tokens),                   sub: "input + output"  },
-    { label: "Today's Actions",  value: data.actions.toLocaleString(),          sub: "via hooks"       },
-    { label: "Active Projects",  value: data.activeProjects.toLocaleString(),   sub: "with sessions"   },
-  ] : Array(4).fill(null)
+    { label: "Today's Cost",     value: fmtCost(data.cost),                    sub: "since 00:00 UTC"          },
+    { label: "Today's Tokens",   value: fmtNum(data.tokens),                   sub: "input + output"           },
+    { label: "Today's Actions",  value: data.actions.toLocaleString(),          sub: "via hooks"                },
+    { label: "Active Projects",  value: data.activeProjects.toLocaleString(),   sub: "with sessions"            },
+    { label: "Month Projection", value: fmtCost(data.projectedMonthCost),       sub: "based on this month's pace" },
+  ] : Array(5).fill(null)
 
   return (
     <div>
       <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">
         Today&apos;s Summary
       </h2>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
         {cards.map((c, i) => (
           <div key={i} className="rounded-xl border border-border bg-muted/10 px-4 py-3">
             {c ? (
