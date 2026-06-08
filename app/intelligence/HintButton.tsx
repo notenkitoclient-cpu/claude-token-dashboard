@@ -47,7 +47,7 @@ export default function HintButton({
 
   if (hint) {
     return (
-      <p className="text-xs text-muted-foreground italic pl-0.5 mt-0.5">
+      <p className="text-xs text-muted-foreground italic pl-0.5 mt-0.5 whitespace-pre-wrap">
         💡 {hint}
       </p>
     )
