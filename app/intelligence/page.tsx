@@ -1,9 +1,8 @@
 import { buildMemory, loadMemory } from "@/lib/intelligence/memory"
 import { computeSchedule, loadSchedule } from "@/lib/intelligence/scheduler"
-import { Badge } from "@/components/ui/badge"
 import RefreshButton from "@/components/RefreshButton"
 import SettingsModal from "@/components/SettingsModal"
-import HintButton from "./HintButton"
+import ProjectGrid, { type ProjectCardData } from "./ProjectGrid"
 import crypto from "crypto"
 import fs from "fs"
 import os from "os"
@@ -25,36 +24,6 @@ function assistKey(projectLabel: string, lastMessage: string): string {
 
 export const dynamic = "force-dynamic"
 
-type Status = "waiting" | "processing" | "idle"
-
-function getStatus(waitingForInput: boolean, stagnationHours: number): Status {
-  if (waitingForInput) return "waiting"
-  if (stagnationHours < 1) return "processing"
-  return "idle"
-}
-
-function StatusBadge({ status }: { status: Status }) {
-  if (status === "waiting") {
-    return (
-      <Badge className="bg-amber-500/15 text-amber-600 border-amber-500/30 border">
-        Waiting
-      </Badge>
-    )
-  }
-  if (status === "processing") {
-    return (
-      <Badge className="bg-blue-500/15 text-blue-600 border-blue-500/30 border">
-        Processing
-      </Badge>
-    )
-  }
-  return (
-    <Badge variant="outline" className="text-muted-foreground">
-      Idle
-    </Badge>
-  )
-}
-
 const EMAIL_RE = /[\w.+-]+@[\w.-]+\.[a-z]{2,}/gi
 
 function displayLabel(label: string): string {
@@ -68,20 +37,10 @@ function displayMessage(text: string): string {
   return masked.length > 60 ? masked.slice(0, 60) + "…" : masked
 }
 
-function ScoreBar({ score }: { score: number }) {
-  const color =
-    score >= 60 ? "bg-red-500" : score >= 30 ? "bg-amber-500" : "bg-emerald-500"
-  return (
-    <div className="flex items-center gap-2">
-      <div className="h-1.5 w-24 rounded-full bg-muted overflow-hidden">
-        <div
-          className={`h-full rounded-full transition-all ${color}`}
-          style={{ width: `${Math.min(100, score)}%` }}
-        />
-      </div>
-      <span className="text-xs tabular-nums text-muted-foreground w-6">{score}</span>
-    </div>
-  )
+function getStatus(waitingForInput: boolean, stagnationHours: number): ProjectCardData["status"] {
+  if (waitingForInput) return "waiting"
+  if (stagnationHours < 1) return "processing"
+  return "idle"
 }
 
 export default function IntelligencePage() {
@@ -89,9 +48,31 @@ export default function IntelligencePage() {
   const memory = loadMemory() ?? buildMemory()
   const assistCache = loadAssistCache()
 
-  const sorted = Object.entries(schedule.projects).sort(
-    ([, a], [, b]) => b.score - a.score
-  )
+  const cards: ProjectCardData[] = Object.entries(schedule.projects)
+    .map(([label, proj]) => {
+      const memProj = memory.projects[label]
+      const lastUserMessage = memProj?.lastUserMessage ?? null
+      return {
+        label,
+        displayName: displayLabel(label),
+        status: getStatus(proj.waitingForInput, proj.stagnationHours),
+        isNext: label === schedule.nextProject,
+        score: proj.score,
+        stagnationHours: proj.stagnationHours,
+        stagnationDisplay:
+          proj.stagnationHours < 24
+            ? `${proj.stagnationHours}h`
+            : `${Math.round(proj.stagnationHours / 24)}d`,
+        incompleteTasks: proj.incompleteTasks,
+        errorRate: proj.errorRate,
+        errorRateDisplay: proj.errorRate > 0 ? `${Math.round(proj.errorRate * 100)}%` : "—",
+        lastUpdatedAt: proj.lastUpdatedAt,
+        lastUserMessage,
+        lastMessageDisplay: lastUserMessage ? displayMessage(lastUserMessage) : null,
+        cachedHint: lastUserMessage ? assistCache[assistKey(label, lastUserMessage)] : undefined,
+      }
+    })
+    .sort((a, b) => b.score - a.score)
 
   return (
     <main className="mx-auto max-w-screen-xl px-4 py-8 space-y-8">
@@ -126,105 +107,8 @@ export default function IntelligencePage() {
         </div>
       )}
 
-      {/* Project grid */}
-      <div className="space-y-4">
-        <p className="text-sm font-semibold text-foreground">Projects · {sorted.length}</p>
-
-        {sorted.length === 0 && (
-          <p className="py-10 text-center text-sm text-muted-foreground">
-            No project data found.
-          </p>
-        )}
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {sorted.map(([label, proj]) => {
-            const status = getStatus(proj.waitingForInput, proj.stagnationHours)
-            const isNext = label === schedule.nextProject
-            const memProj = memory.projects[label]
-
-            const cachedHint = memProj?.lastUserMessage
-              ? assistCache[assistKey(label, memProj.lastUserMessage)]
-              : undefined
-
-            return (
-              <div
-                key={label}
-                className={`rounded-lg border p-4 flex flex-col gap-3 transition-colors ${
-                  isNext
-                    ? "border-primary bg-primary/5"
-                    : status === "waiting"
-                    ? "border-amber-500/50 bg-amber-500/5"
-                    : "border-border hover:bg-muted/30"
-                }`}
-              >
-                {/* Header: name + badges */}
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex flex-col gap-1 min-w-0">
-                    {isNext && (
-                      <span className="text-[10px] font-semibold text-amber-600 bg-amber-500/15 px-1.5 py-0.5 rounded-full border border-amber-500/30 self-start">
-                        NEXT
-                      </span>
-                    )}
-                    <span className="text-sm font-bold text-foreground truncate">
-                      {displayLabel(label)}
-                    </span>
-                  </div>
-                  <StatusBadge status={status} />
-                </div>
-
-                {/* 2×2 metrics grid */}
-                <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-                  <div className="flex flex-col gap-0.5">
-                    <span className="text-[10px] text-muted-foreground">Score</span>
-                    <ScoreBar score={proj.score} />
-                  </div>
-                  <div className="flex flex-col gap-0.5">
-                    <span className="text-[10px] text-muted-foreground">Stagnation</span>
-                    <span className="text-xs tabular-nums text-foreground">
-                      {proj.stagnationHours < 24
-                        ? `${proj.stagnationHours}h`
-                        : `${Math.round(proj.stagnationHours / 24)}d`}
-                    </span>
-                  </div>
-                  <div className="flex flex-col gap-0.5">
-                    <span className="text-[10px] text-muted-foreground">Tasks</span>
-                    <span className="text-xs tabular-nums text-foreground">
-                      {proj.incompleteTasks}
-                    </span>
-                  </div>
-                  <div className="flex flex-col gap-0.5">
-                    <span className="text-[10px] text-muted-foreground">Err rate</span>
-                    <span className="text-xs tabular-nums text-foreground">
-                      {proj.errorRate > 0
-                        ? `${Math.round(proj.errorRate * 100)}%`
-                        : "—"}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Last message */}
-                {memProj?.lastUserMessage && (
-                  <p className="text-xs text-muted-foreground line-clamp-2">
-                    {displayMessage(memProj.lastUserMessage)}
-                  </p>
-                )}
-
-                {/* Hint button */}
-                {memProj?.lastUserMessage && (
-                  <HintButton
-                    projectLabel={label}
-                    lastMessage={memProj.lastUserMessage}
-                    stagnationHours={proj.stagnationHours}
-                    incompleteTasks={proj.incompleteTasks}
-                    errorRate={proj.errorRate}
-                    initialHint={cachedHint}
-                  />
-                )}
-              </div>
-            )
-          })}
-        </div>
-      </div>
+      {/* Project grid (client — handles filter + sort) */}
+      <ProjectGrid cards={cards} />
 
       <p className="text-xs text-muted-foreground text-right">
         Generated {new Date(schedule.generatedAt).toLocaleString("en-US", {
