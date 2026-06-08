@@ -1,9 +1,28 @@
-import { buildMemory } from "@/lib/intelligence/memory"
-import { computeSchedule } from "@/lib/intelligence/scheduler"
+import { buildMemory, loadMemory } from "@/lib/intelligence/memory"
+import { computeSchedule, loadSchedule } from "@/lib/intelligence/scheduler"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import RefreshButton from "@/components/RefreshButton"
 import SettingsModal from "@/components/SettingsModal"
+import HintButton from "./HintButton"
+import crypto from "crypto"
+import fs from "fs"
+import os from "os"
+import path from "path"
+
+const ASSIST_CACHE_FILE = path.join(os.homedir(), ".claude-dashboard", "assist-cache.json")
+
+function loadAssistCache(): Record<string, string> {
+  try {
+    return JSON.parse(fs.readFileSync(ASSIST_CACHE_FILE, "utf-8")) as Record<string, string>
+  } catch {
+    return {}
+  }
+}
+
+function assistKey(projectLabel: string, lastMessage: string): string {
+  return crypto.createHash("sha256").update(projectLabel + lastMessage.slice(0, 50)).digest("hex")
+}
 
 export const dynamic = "force-dynamic"
 
@@ -67,8 +86,9 @@ function ScoreBar({ score }: { score: number }) {
 }
 
 export default function IntelligencePage() {
-  const memory = buildMemory()
-  const schedule = computeSchedule()
+  const schedule = loadSchedule() ?? computeSchedule()
+  const memory = loadMemory() ?? buildMemory()
+  const assistCache = loadAssistCache()
 
   const sorted = Object.entries(schedule.projects).sort(
     ([, a], [, b]) => b.score - a.score
@@ -121,6 +141,10 @@ export default function IntelligencePage() {
               const isNext = label === schedule.nextProject
               const memProj = memory.projects[label]
 
+              const cachedHint = memProj?.lastUserMessage
+                ? assistCache[assistKey(label, memProj.lastUserMessage)]
+                : undefined
+
               return (
                 <div
                   key={label}
@@ -145,6 +169,16 @@ export default function IntelligencePage() {
                       <p className="text-xs text-muted-foreground line-clamp-1 pl-0.5">
                         {displayMessage(memProj.lastUserMessage)}
                       </p>
+                    )}
+                    {memProj?.lastUserMessage && (
+                      <HintButton
+                        projectLabel={label}
+                        lastMessage={memProj.lastUserMessage}
+                        stagnationHours={proj.stagnationHours}
+                        incompleteTasks={proj.incompleteTasks}
+                        errorRate={proj.errorRate}
+                        initialHint={cachedHint}
+                      />
                     )}
                   </div>
 

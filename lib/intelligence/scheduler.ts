@@ -21,6 +21,19 @@ export interface SchedulerData {
 }
 
 const BASE = path.join(os.homedir(), ".claude", "projects")
+const CACHE_DIR = path.join(os.homedir(), ".claude-dashboard")
+const SCHEDULE_CACHE_FILE = path.join(CACHE_DIR, "schedule.json")
+const SCHEDULE_TTL_MS = 5 * 60 * 1000
+
+export function loadSchedule(): SchedulerData | null {
+  try {
+    const data = JSON.parse(fs.readFileSync(SCHEDULE_CACHE_FILE, "utf-8")) as SchedulerData
+    if (Date.now() - new Date(data.generatedAt).getTime() > SCHEDULE_TTL_MS) return null
+    return data
+  } catch {
+    return null
+  }
+}
 
 // Mirror label helpers (private in collect.ts / memory.ts / scorer.ts)
 function labelFromCwd(cwd: string): string {
@@ -134,5 +147,12 @@ export function computeSchedule(): SchedulerData {
     ? waiting[0][0]
     : Object.entries(projects).sort(([, a], [, b]) => b.score - a.score)[0]?.[0] ?? null
 
-  return { nextProject, projects, generatedAt: new Date().toISOString() }
+  const result: SchedulerData = { nextProject, projects, generatedAt: new Date().toISOString() }
+
+  try {
+    if (!fs.existsSync(CACHE_DIR)) fs.mkdirSync(CACHE_DIR, { recursive: true })
+    fs.writeFileSync(SCHEDULE_CACHE_FILE, JSON.stringify(result, null, 2), "utf-8")
+  } catch { /* ignore cache write errors */ }
+
+  return result
 }
