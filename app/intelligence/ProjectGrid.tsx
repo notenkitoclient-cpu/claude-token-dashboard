@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react"
 import { Badge } from "@/components/ui/badge"
 import HintButton from "./HintButton"
+import ClaudeMdModal from "@/components/ClaudeMdModal"
 
 export type Status = "waiting" | "processing" | "idle"
 type FilterValue = "all" | "waiting" | "idle"
@@ -23,6 +24,7 @@ export interface ProjectCardData {
   lastUserMessage: string | null
   lastMessageDisplay: string | null
   cachedHint?: string
+  hasClaudeMd: boolean
 }
 
 function StatusBadge({ status }: { status: Status }) {
@@ -65,6 +67,7 @@ function ScoreBar({ score }: { score: number }) {
 export default function ProjectGrid({ cards }: { cards: ProjectCardData[] }) {
   const [filter, setFilter] = useState<FilterValue>("all")
   const [sort, setSort] = useState<SortValue>("score")
+  const [claudeMdProject, setClaudeMdProject] = useState<string | null>(null)
 
   const filtered = useMemo(() => {
     let result = cards
@@ -83,6 +86,9 @@ export default function ProjectGrid({ cards }: { cards: ProjectCardData[] }) {
 
   return (
     <div className="space-y-4">
+      {claudeMdProject && (
+        <ClaudeMdModal project={claudeMdProject} onClose={() => setClaudeMdProject(null)} />
+      )}
       {/* Toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-3">
@@ -182,6 +188,16 @@ export default function ProjectGrid({ cards }: { cards: ProjectCardData[] }) {
                 errorRate={card.errorRate}
                 initialHint={card.cachedHint}
               />
+            )}
+
+            {/* CLAUDE.md button */}
+            {card.hasClaudeMd && (
+              <button
+                onClick={() => setClaudeMdProject(card.label)}
+                className="mt-auto self-start text-xs rounded-md border border-border px-2 py-1 text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+              >
+                CLAUDE.md
+              </button>
             )}
           </div>
         ))}

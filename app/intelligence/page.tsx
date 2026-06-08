@@ -38,6 +38,24 @@ function displayMessage(text: string): string {
   return masked.length > 60 ? masked.slice(0, 60) + "…" : masked
 }
 
+function findClaudeMd(cwd: string | null | undefined): boolean {
+  if (!cwd) return false
+  const home = os.homedir()
+  const homePrefix = home + path.sep
+  let dir = cwd
+  while (dir.startsWith(home) && dir !== home) {
+    const resolved = path.resolve(dir)
+    if (!resolved.startsWith(homePrefix)) break
+    try {
+      if (fs.statSync(path.join(resolved, "CLAUDE.md")).isFile()) return true
+    } catch { /* not at this level */ }
+    const parent = path.dirname(dir)
+    if (parent === dir) break
+    dir = parent
+  }
+  return false
+}
+
 function getStatus(waitingForInput: boolean, stagnationHours: number): ProjectCardData["status"] {
   if (waitingForInput) return "waiting"
   if (stagnationHours < 1) return "processing"
@@ -71,6 +89,7 @@ export default function IntelligencePage() {
         lastUserMessage,
         lastMessageDisplay: lastUserMessage ? displayMessage(lastUserMessage) : null,
         cachedHint: lastUserMessage ? assistCache[assistKey(label, lastUserMessage)] : undefined,
+        hasClaudeMd: findClaudeMd(memProj?.cwd),
       }
     })
     .sort((a, b) => b.score - a.score)

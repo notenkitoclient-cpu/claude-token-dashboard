@@ -7,6 +7,7 @@ export interface ProjectMemory {
   lastUserMessage: string | null
   lastToolUse: string | null
   lastUpdatedAt: string | null
+  cwd: string | null
 }
 
 export interface MemoryData {
@@ -71,6 +72,7 @@ type Acc = {
   lastToolUse: string | null
   lastToolUseAt: string
   lastUpdatedAt: string
+  cwd: string | null
 }
 
 export function buildMemory(): MemoryData {
@@ -79,7 +81,7 @@ export function buildMemory(): MemoryData {
   const acc: Record<string, Acc> = {}
 
   for (const label of Object.keys(byProject)) {
-    acc[label] = { lastUserMessage: null, lastUserMessageAt: "", lastToolUse: null, lastToolUseAt: "", lastUpdatedAt: "" }
+    acc[label] = { lastUserMessage: null, lastUserMessageAt: "", lastToolUse: null, lastToolUseAt: "", lastUpdatedAt: "", cwd: null }
   }
 
   if (!fs.existsSync(BASE)) {
@@ -109,9 +111,10 @@ export function buildMemory(): MemoryData {
         const label = cwd ? labelFromCwd(cwd) : fallbackLabel
 
         if (!acc[label]) {
-          acc[label] = { lastUserMessage: null, lastUserMessageAt: "", lastToolUse: null, lastToolUseAt: "", lastUpdatedAt: "" }
+          acc[label] = { lastUserMessage: null, lastUserMessageAt: "", lastToolUse: null, lastToolUseAt: "", lastUpdatedAt: "", cwd: null }
         }
         const entry = acc[label]
+        if (!entry.cwd && cwd) entry.cwd = cwd
 
         if (ts && (!entry.lastUpdatedAt || ts > entry.lastUpdatedAt)) entry.lastUpdatedAt = ts
 
@@ -143,6 +146,7 @@ export function buildMemory(): MemoryData {
       lastUserMessage: data.lastUserMessage,
       lastToolUse: data.lastToolUse,
       lastUpdatedAt: data.lastUpdatedAt || null,
+      cwd: data.cwd,
     }
   }
 
