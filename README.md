@@ -13,10 +13,6 @@
 
 > Visualize your [Claude Code](https://claude.ai/code) token usage by project and date — built with Next.js + Tailwind.
 
-![Summary cards and daily chart](screenshot.v2-1.png)
-
-![Project breakdown table](screenshot.v2-2.png)
-
 ## Quick Start (No Install)
 
 ```bash
