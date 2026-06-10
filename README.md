@@ -7,6 +7,7 @@
     <td align="center"><img src="docs/screenshot-dashboard.png" /><br /><sub>Dashboard — token &amp; cost by project</sub></td>
     <td align="center"><img src="docs/screenshot-activity.png" /><br /><sub>Activity — real-time action log</sub></td>
     <td align="center"><img src="docs/screenshot-security.png" /><br /><sub>Security — environment risk score</sub></td>
+    <td align="center"><img src="docs/screenshot-intelligence.png" /><br /><sub>Intelligence — cognitive load scoring</sub></td>
   </tr>
 </table>
 
